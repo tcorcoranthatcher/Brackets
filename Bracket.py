@@ -1,8 +1,8 @@
 import operator
 
 master = [1, 4, 5, 8, 10, 11, 13, 15, 17, 19, 22, 23, 26, 27, 30, 31, 33, 36, 37, 39, 41, 44, 45, 47, 49, 52, 54, 55,
-          58, 59, 62, 64, 1, 5, 11, 15, 17, 23, 27, 31, 33, 37, 41, 45, 49, 55, 58, 62, 1, 15, 17, 31, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0]
+          58, 59, 62, 64, 1, 5, 11, 15, 17, 23, 27, 31, 33, 37, 41, 45, 49, 55, 58, 62, 1, 11, 17, 27, 33, 41, 49, 58, 1, 17,
+          33, 49, 0, 0, 0]
 
 
 class bracket:
@@ -11,7 +11,6 @@ class bracket:
         self.bracket = bracket
         self.points = points
         self.wins = wins
-        self.chances = float(wins / 32768)
 
 
 def check(master, check):
@@ -19,22 +18,22 @@ def check(master, check):
         if i <= 32:
             if master[i - 1] == check.bracket[i - 1]:
                 check.points += 1
-        if i > 32 and i <= 48:
+        if 32 < i <= 48:
             if master[i - 1] == check.bracket[i - 1]:
                 check.points += 2
-        if i > 48 and i <= 56:
+        if 48 < i <= 56:
             if master[i - 1] == check.bracket[i - 1]:
                 check.points += 4
-        if i > 56 and i <= 60:
+        if 56 < i <= 60:
             if master[i - 1] == check.bracket[i - 1]:
                 check.points += 8
-        if i > 60 and i <= 62:
+        if 60 < i <= 62:
             if master[i - 1] == check.bracket[i - 1]:
                 check.points += 16
-        if i > 62 and i <= 63:
+        if 62 < i <= 63:
             if master[i - 1] == check.bracket[i - 1]:
                 check.points += 32
-    return (check.name, check.points)
+    return check.name, check.points
 
 
 def checkprint(master, pool):
@@ -49,6 +48,101 @@ def checkprint(master, pool):
         return item[1]
 
     return sorted(leaderboard, key=getKey, reverse=True)
+
+
+def chance_after_first_weekend(master, pool):
+    iterator_dict = {}
+    for i in range(32768, 65536):
+        holder = []
+        binary_conversion = bin(i)
+        string_conversion = str(binary_conversion)
+        for j in range(3, len(string_conversion)):
+            if string_conversion[j] == "1":
+                int_conversion = 1
+            else:
+                int_conversion = 0
+            holder.append(int_conversion)
+        iterator_dict[i - 32767] = holder
+
+    for i in range(1, len(iterator_dict)+1):
+        master_check = master
+        iteration = iterator_dict[i]
+        for j in range(8):
+            if iteration[14-j] == 0:
+                master_check[48+j] = master_check[32 + 2*j]
+            else:
+                master_check[48+j] = master_check[32 + 2*j + 1]
+        for j in range(4):
+            if iteration[6-j] == 0:
+                master_check[56+j] = master_check[48 + 2*j]
+            else:
+                master_check[56+j] = master_check[48 + 2*j + 1]
+        for j in range(2):
+            if iteration[2-j] == 0:
+                master_check[60+j] = master_check[56 + 2*j]
+            else:
+                master_check[60+j] = master_check[56 + 2*j + 1]
+        if iteration[0] == 0:
+            master_check[62] = master_check[60]
+        else:
+            master_check[62] = master_check[61]
+        iteration_outcome = checkprint(master_check, pool)
+
+        for k in range(len(pool)):
+            if pool[k].name == iteration_outcome[0][0]:
+                pool[k].wins += 1
+                for l in range(1, len(iteration_outcome)):
+                    if iteration_outcome[l][1] == iteration_outcome[0][1]:
+                        for m in range(31):
+                            if pool[m].name == iteration_outcome[l][0]:
+                                pool[m].wins += 1
+                    else:
+                        break
+    for j in range(len(pool)):
+        print(str(pool[j].name)+" has a " + str(round(float(100*pool[j].wins/32768), 2)) + "% chance to win the pool")
+
+
+def chance_after_second_weekend(master, pool):
+    iterator_dict = {}
+    for i in range(8, 16):
+        holder = []
+        binary_conversion = bin(i)
+        string_conversion = str(binary_conversion)
+        for j in range(3, len(string_conversion)):
+            if string_conversion[j] == "1":
+                int_conversion = 1
+            else:
+                int_conversion = 0
+            holder.append(int_conversion)
+        iterator_dict[i - 7] = holder
+
+    for i in range(1, len(iterator_dict)+1):
+        master_check = master
+        iteration = iterator_dict[i]
+        for j in range(2):
+            if iteration[2-j] == 0:
+                master_check[60+j] = master_check[56 + 2*j]
+            else:
+                master_check[60+j] = master_check[56 + 2*j + 1]
+        if iteration[0] == 0:
+            master_check[62] = master_check[60]
+        else:
+            master_check[62] = master_check[61]
+        iteration_outcome = checkprint(master_check, pool)
+
+        for k in range(len(pool)):
+            if pool[k].name == iteration_outcome[0][0]:
+                pool[k].wins += 1
+                for l in range(1, len(iteration_outcome)):
+                    if iteration_outcome[l][1] == iteration_outcome[0][1]:
+                        for m in range(31):
+                            if pool[m].name == iteration_outcome[l][0]:
+                                pool[m].wins += 1
+                    else:
+                        break
+
+    for j in range(len(pool)):
+        print(str(pool[j].name)+" has a " + str(round(float(100*pool[j].wins/8), 2)) + "% chance to win the pool")
 
 
 Krysta = bracket("Krysta",
@@ -176,156 +270,10 @@ Griffin = bracket("Griffin",
                   35, 0, 0)
 
 pool = (
-Krysta, Don, Barb, Darci, Noel, Violet, Tommy, Rebecca, John, Gary, Beau, Ben, Harry, Michael, Anna, Andy, Zack, Kyle,
-Deb, Kelsey, Jason, Jim, Maurice, Greg, Humbert, Steve, Tim, Brandon, Joanne, Jean, Griffin)
+    Krysta, Don, Barb, Darci, Noel, Violet, Tommy, Rebecca, John, Gary, Beau, Ben, Harry, Michael, Anna, Andy, Zack,
+    Kyle,
+    Deb, Kelsey, Jason, Jim, Maurice, Greg, Humbert, Steve, Tim, Brandon, Joanne, Jean, Griffin)
+
+chances = chance_after_first_weekend(master, pool)
 
 
-def iterator():
-    iterator_dict = {}
-    for i in range(2048, 4096):
-        holder = []
-        binary_conversion = bin(i)
-        string_conversion = str(binary_conversion)
-        for j in range(3, 14):
-            if string_conversion[j] == "1":
-                int_conversion = 1
-            else:
-                int_conversion = 0
-            holder.append(int_conversion)
-        iterator_dict[i - 2047] = holder
-
-    return iterator_dict
-
-
-def chances(iterator_dict, master, pool):
-    # UPDATE FOR J IN RANGE
-    for i in range(1, 2049):
-        # 129
-        master_change = master
-        elite_eight_dict = {1: 1, 2: 15, 3: 17, 4: 31}
-        final_four_dict = {}
-        champ_game_dict = {}
-        for j in range(11):
-            if j == 0:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = 33
-                    elite_eight_dict[5] = 33
-                else:
-                    master_change[52 + j] = 37
-                    elite_eight_dict[5] = 37
-            if j == 1:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = 41
-                    elite_eight_dict[6] = 41
-                else:
-                    master_change[52 + j] = 45
-                    elite_eight_dict[6] = 45
-            if j == 2:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = 49
-                    elite_eight_dict[7] = 49
-                else:
-                    master_change[52 + j] = 55
-                    elite_eight_dict[7] = 55
-            if j == 3:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = 58
-                    elite_eight_dict[8] = 58
-                else:
-                    master_change[52 + j] = 62
-                    elite_eight_dict[8] = 62
-            if j == 4:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = elite_eight_dict[1]
-                    final_four_dict[1] = elite_eight_dict[1]
-                else:
-                    master_change[52 + j] = elite_eight_dict[2]
-                    final_four_dict[1] = elite_eight_dict[2]
-            if j == 5:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = elite_eight_dict[3]
-                    final_four_dict[2] = elite_eight_dict[3]
-                else:
-                    master_change[52 + j] = elite_eight_dict[4]
-                    final_four_dict[2] = elite_eight_dict[4]
-            if j == 6:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = elite_eight_dict[5]
-                    final_four_dict[3] = elite_eight_dict[5]
-                else:
-                    master_change[52 + j] = elite_eight_dict[6]
-                    final_four_dict[3] = elite_eight_dict[6]
-            if j == 7:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = elite_eight_dict[7]
-                    final_four_dict[4] = elite_eight_dict[7]
-                else:
-                    master_change[52 + j] = elite_eight_dict[8]
-                    final_four_dict[4] = elite_eight_dict[8]
-            if j == 8:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = final_four_dict[1]
-                    champ_game_dict[1] = final_four_dict[1]
-                else:
-                    master_change[52 + j] = final_four_dict[2]
-                    champ_game_dict[1] = final_four_dict[2]
-            if j == 9:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = final_four_dict[3]
-                    champ_game_dict[2] = final_four_dict[3]
-                else:
-                    master_change[52 + j] = final_four_dict[4]
-                    champ_game_dict[2] = final_four_dict[4]
-            if j == 10:
-                if iterator_dict[i][j] == 0:
-                    master_change[52 + j] = champ_game_dict[1]
-                else:
-                    master_change[52 + j] = champ_game_dict[2]
-        iteration_outcome = checkprint(master_change, pool)
-        for k in range(31):
-            if pool[k].name == iteration_outcome[0][0]:
-                pool[k].wins += 1
-        for l in range(1, 31):
-            if iteration_outcome[l][1] == iteration_outcome[0][1]:
-                for m in range(31):
-                    if pool[m].name == iteration_outcome[l][0]:
-                        pool[m].wins += 1
-
-    print("Krysta has a " + str(Krysta.wins) + "chance to win")
-    print("Don has a " + str(Don.wins) + " chance to win")
-    print("Barb has a " + str(Barb.wins) + " chance to win")
-    print("Darci has a " + str(Darci.wins) + " chance to win")
-    print("Noel has a " + str(Noel.wins) + " chance to win")
-    print("Violet has a " + str(Violet.wins) + " chance to win")
-    print("Tommy has a " + str(Tommy.wins) + " chance to win")
-    print("Rebecca has a " + str(Rebecca.wins) + " chance to win")
-    print("John has a " + str(John.wins) + " chance to win")
-    print("Gary has a " + str(Gary.wins) + " chance to win")
-    print("Beau has a " + str(Beau.wins) + " chance to win")
-    print("Ben has a " + str(Ben.wins) + " chance to win")
-    print("Harry has a " + str(Harry.wins) + " chance to win")
-    print("Michael has a " + str(Michael.wins) + " chance to win")
-    print("Anna has a " + str(Anna.wins) + " chance to win")
-    print("Andy has a " + str(Andy.wins) + " chance to win")
-    print("Zack has a " + str(Zack.wins) + " chance to win")
-    print("Kyle has a " + str(Kyle.wins) + " chance to win")
-    print("Deb has a " + str(Deb.wins) + " chance to win")
-    print("Kelsey has a " + str(Kelsey.wins) + " chance to win")
-    print("Jason has a " + str(Jason.wins) + " chance to win")
-    print("Jim has a " + str(Jim.wins) + " chance to win")
-    print("Maurice has a " + str(Maurice.wins) + " chance to win")
-    print("Greg has a " + str(Greg.wins) + " chance to win")
-    print("Humbert has a " + str(Humbert.wins) + " chance to win")
-    print("Steve has a " + str(Steve.wins) + " chance to win")
-    print("Tim has a " + str(Tim.wins) + " chance to win")
-    print("Brandon has a " + str(Brandon.wins) + " chance to win")
-    print("Joanne has a " + str(Joanne.wins) + " chance to win")
-    print("Jean has a " + str(Jean.wins) + " chance to win")
-    print("Griffin has a " + str(Griffin.wins) + " chance to win")
-
-
-iteration = iterator()
-chances(iteration, master, pool)
-
-print(checkprint(master, pool))
-print(iteration)
